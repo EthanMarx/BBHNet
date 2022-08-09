@@ -9,13 +9,14 @@ from bbhnet.io.timeslides import Segment
 def test_cluster_distribution():
     distribution = ClusterDistribution("test", 5)
 
+    shift = 1
     y = t = np.arange(20).astype("float32")
-    distribution.update(y, t)
+    distribution.update(y, t, shift)
     assert distribution.Tb == 20
     assert distribution.events == [4.0, 9.0, 14.0, 19.0]
 
     y += 1
-    distribution.update(y, t)
+    distribution.update(y, t, shift)
     assert distribution.Tb == 40
     assert distribution.events == [
         4.0,

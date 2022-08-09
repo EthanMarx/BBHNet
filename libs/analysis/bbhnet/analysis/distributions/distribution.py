@@ -18,12 +18,13 @@ class Distribution:
 
     def __post_init__(self):
         self.Tb = 0
-        self.fnames = []
 
     def write(self, path: Path):
         raise NotImplementedError
 
-    def update(self, x: np.ndarray, t: np.ndarray):
+    def update(
+        self, x: np.ndarray, t: np.ndarray, shift: Optional[float] = None
+    ):
         """Update this distribution to reflect new data"""
 
         raise NotImplementedError
@@ -55,6 +56,10 @@ class Distribution:
 
         nb = self.nb(threshold)
         return 1 - np.exp(-T * (1 + nb) / self.Tb)
+
+    def apply_vetoes(self, vetoes: np.ndarray):
+        """Vetoes events within given segments"""
+        raise NotImplementedError
 
     def characterize_events(
         self,
@@ -168,7 +173,7 @@ class Distribution:
         # if we only provided a single float event time,
         # return single timeseries for far and t
         if single_event:
-            return metrics[0], times[0]
+            return metrics[0], times[0], integrated[0]
 
         # otherwise, return an array of these
         # stacked along the 0th dimension
@@ -177,7 +182,7 @@ class Distribution:
     def fit(
         self,
         segments: SEGMENT_LIKE,
-        shift: float,
+        shift: Optional[float] = None,
         vetoes: Optional[np.ndarray] = None,
         warm_start: bool = True,
     ) -> None:
@@ -187,12 +192,13 @@ class Distribution:
 
         Args:
             segments:
-                `Segment` or list of `Segments` on which
+                `Segment` list of `Segments`, or a (y, t) tuple on which
                 to update the distribution
             warm_start:
                 Whether to fit the distribution from scratch
                 or continue from its existing state.
             vetoes:
+
             shift:
                 Time shift of second interferometer
         """
@@ -209,20 +215,7 @@ class Distribution:
 
         for segment in segments:
             y, t = segment.load(self.dataset)
-
-            if vetoes is not None:
-                root = segment.shift
-                shifts = list(map(float, root.split("-")[1:]))
-                for vetoes, shift in zip(vetoes, shifts):
-                    shifted_times = t + shift
-                    for vetoe in vetoes:
-                        start, stop = vetoe
-                        veto_mask = shifted_times > start
-                        veto_mask &= shifted_times < stop
-                        y[veto_mask] = -np.inf
-
             self.update(y, t, shift)
-            self.fnames.extend(segment.fnames)
 
     def __str__(self):
         return f"{self.__class__.__name__}('{self.dataset}', Tb={self.Tb})"

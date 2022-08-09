@@ -91,7 +91,7 @@ class DiscreteDistribution(Distribution):
         )
         return nb
 
-    def update(self, x: np.ndarray, t: np.ndarray):
+    def update(self, x: np.ndarray, t: np.ndarray, shift: float = None):
         """
         Update the histogram using the values from `x`,
         and update the background time `Tb` using the

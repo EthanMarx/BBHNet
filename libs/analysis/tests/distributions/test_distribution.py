@@ -66,7 +66,7 @@ def test_distribution(event_time, event_times, offset, sample_rate):
     segment.load = MagicMock(return_value=(y, t))
 
     for metric, expected in zip(["far", "significance"], [far, significance]):
-        characterization, times = distribution.characterize_events(
+        characterization, times, integrated = distribution.characterize_events(
             segment, event_times=event_times, window_length=1, metric=metric
         )
 
