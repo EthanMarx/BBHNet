@@ -12,8 +12,13 @@ from bbhnet.analysis.distributions.distribution import Distribution
 @dataclass
 class ClusterDistribution(Distribution):
     """
-    Distribution representing a clustering of sampled
-    points over consecutive windows of length `t_clust`
+    Distribution representing a clustering of sampled points.
+    The result of clustering is that there
+    is no event closer in time to any other event
+    by (t_clust / 2) seconds, and each remaining event is the
+    highest network output
+    (hence lowest FAR) in a t_clust second window centered on itself.
+
     Args:
         t_clust: The length of the clustering window
     """
@@ -22,9 +27,9 @@ class ClusterDistribution(Distribution):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.events = []
-        self.event_times = []
-        self.shifts = []
+        self.events = np.array([])
+        self.event_times = np.array([])
+        self.shifts = np.array([])
 
     def _load(self, path: Path):
         """Load distribution information from an HDF5 file"""
@@ -65,46 +70,60 @@ class ClusterDistribution(Distribution):
         Update the histogram using the values from `x`,
         and update the background time `Tb` using the
         values from `t`. It is assumed that `t` is contiguous
-        in time.
+        in time and evenly sampled.
         """
+        # TODO: with this clustering method,
+        # if there are monotonically increasing
+        # network outputs on time scales greater than
+        # the window length, all of those events will be clustered
+        # to the loudest event:
+        # e.g.
+        # t = [1,2,3,4,5]
+        # x = [1,2,3,4,5]
+        # t_clust = 1
+        # will all cluster to the event at t = 5
 
         # update livetime before we start
         # manipulating the t array
         self.Tb += t[-1] - t[0] + t[1] - t[0]
 
-        # cluster values over window length
+        # infer sample rate from time array
         sample_rate = 1 / (t[1] - t[0])
 
-        # samples per cluster window
-        clust_size = int(sample_rate * self.t_clust)
+        # samples per half cluster window
+        half_clust_size = int(sample_rate * self.t_clust / 2)
 
-        # take care of reshaping
-        # into windows of cluster size
-        extra = len(x) % clust_size
-        if extra != 0:
-            arg_max = np.argmax(x[-extra:])
-            time = t[-extra:][arg_max]
-            max_ = x[-extra:][arg_max]
-            x = x[:-extra]
-            t = t[:-extra]
-            self.events.append(max_)
-            self.event_times.append(time)
-            self.shifts.append(shift)
+        # indices to remove after clustering
+        remove_indices = []
 
-        x = x.reshape((-1, clust_size))
-        maxs = list(np.amax(x, axis=-1))
-        arg_maxs = np.argmax(x, axis=-1)
-        times = np.take_along_axis(
-            t.reshape((-1, clust_size)),
-            np.expand_dims(arg_maxs, axis=-1),
-            axis=-1,
-        ).squeeze(axis=-1)
+        for i in range(len(t)):
+
+            left = max(0, i - half_clust_size)
+            right = min(len(t), i + half_clust_size)
+
+            # if there are any events
+            # within half window with a greater
+            # network ouput, remove this event
+            if any(x[left:right] > x[i]):
+                remove_indices.append(i)
+
+        events = np.delete(x, remove_indices)
+        times = np.delete(t, remove_indices)
 
         # update events, event times,
         # livetime and timeshifts
-        self.events.extend(maxs)
-        self.event_times.extend(times)
-        self.shifts.extend(np.zeros_like(times) + shift)
+        self.events = np.append(self.events, events)
+        self.event_times = np.append(self.event_times, times)
+        self.shifts = np.append(
+            self.shifts, np.repeat(shift, len(times), axis=0)
+        )
+
+        # re sort by event_time
+        sorted_args = np.argsort(self.event_times)
+
+        self.events = self.events[sorted_args]
+        self.event_times = self.event_times[sorted_args]
+        self.shifts = self.shifts[sorted_args]
 
     def nb(self, threshold: Union[float, np.ndarray]):
         """

@@ -9,14 +9,13 @@ from bbhnet.io.timeslides import Segment
 def test_cluster_distribution():
     distribution = ClusterDistribution("test", 5)
 
-    shift = 1
     y = t = np.arange(20).astype("float32")
-    distribution.update(y, t, shift)
+    distribution.update(y, t, shift=1)
     assert distribution.Tb == 20
     assert distribution.events == [4.0, 9.0, 14.0, 19.0]
 
     y += 1
-    distribution.update(y, t, shift)
+    distribution.update(y, t, shift=2)
     assert distribution.Tb == 40
     assert distribution.events == [
         4.0,
@@ -33,7 +32,7 @@ def test_cluster_distribution():
     segment.load = MagicMock(return_value=(y, t))
     segment.fnames = ["test1"]
 
-    distribution.fit(segment)
+    distribution.fit(segment, shift=8)
     assert distribution.Tb == 60
     assert distribution.events == [
         4.0,
@@ -56,7 +55,7 @@ def test_cluster_distribution():
     segment = Mock(Segment)
     segment.load = MagicMock(return_value=(y, t))
     segment.fnames = ["test1"]
-    distribution.fit(segment, warm_start=False)
+    distribution.fit(segment, shift=3, warm_start=False)
     assert distribution.Tb == 19
     assert distribution.events == [4.0, 9.0, 14.0, 18.0]
 
