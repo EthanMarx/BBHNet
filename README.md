@@ -5,7 +5,7 @@ Single source for training, performing inference with, then analyzing the perfor
 ## Project organization
 Project is divided into `libs`, modular source libraries for performing the relevant signal processing and deep learning tasks, and `projects`, pipelines for training and inference built on top of these libraries. 
 
-There are a few submodules BBHnet relies on:
+BBHnet relies on the following [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
 
 
 [`hermes`](https://github.com/ML4GW/hermes) submodule includes libraries for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
