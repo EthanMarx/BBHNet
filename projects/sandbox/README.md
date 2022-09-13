@@ -4,7 +4,7 @@ The sandbox project is an end to end pipeline for quickly experimenting with dif
 multiple projects that are executed in serial via Pinto's [Pipeline utility](https://github.com/EthanMarx/pinto/blob/add-pipeline-to-readme/README.md#pipelines).
 
 ## Projects
-### [./generate_waveforms](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_waveforms)
+### (./generate_waveforms)(https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_waveforms)
 Generates raw polarizations of BBH waveforms 
 
 ### [generate_glitches](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_glitches)
