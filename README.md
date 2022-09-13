@@ -3,19 +3,15 @@ Single source for training, performing inference with, then analyzing the perfor
 
 
 ## Project organization
-Project is divided into `libs`, modular source libraries for performing the relevant signal processing and deep learning tasks, and `projects`, pipelines for training and inference built on top of these libraries. 
+The repository is divided into `libs`, modular source libraries for performing the relevant signal processing and deep learning tasks, and `projects`, pipelines for data generation, training, inference, and analysis built on top of these libraries. 
 
 BBHnet relies on the following [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
 
 
-[`hermes`](https://github.com/ML4GW/hermes) submodule includes libraries for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
+[`hermes`](https://github.com/ML4GW/hermes) includes libraries for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
 
 
-[`ml4gw`](https://github.com/ML4GW/hermes) submodule includes torch utilities for common GW data manipulation, like projecting waveforms onto interfermeters
-
-## Current Projects
-The [sandbox](https://github.com/ML4GW/BBHnet/projects/sandbox) pipeline contains several projects used for testing new ideas and configurations in a controlled setting.
-
+[`ml4gw`](https://github.com/ML4GW/hermes) includes torch utilities for common GW data manipulation, like projecting waveforms onto interfermeters
 
 
 ## Installation
@@ -71,10 +67,3 @@ pinto run path/to/project my-command --arg 1
 
 Otherwise, for Conda projects, you'll have to activate the appropriate Conda environment first then execute the code inside of it.
 For Poetry environments, it should be enough to run `poetry run my-command --arg 1` _from the projects directory_ (one downside of Poetry is that everything has to be done locally).
-
-### Running pipelines
-A Pipeline is composed of a series of projects. To execute a Pipeline, simply run 
-```console
-pinto run /path/to/pipeline/` 
-```
-(alternatively, `pinto run` if you are in the pipeline directory). `Pinto` will look in `/path/to/project/` for a `pyproject.toml` file. This file contains a `tool.pinto` table which describes the project execution order via the `steps` argument. A `step` if formatted in the following way: `project_directory:project-executable:optional_subcommand"`. `Pinto` will enter each `project_directory`, build and activate the projects environment, and run the `project-executable` with the configuration settings specified in the `pyproject.toml`. 
