@@ -4,10 +4,15 @@ Single source for training, performing inference with, then analyzing the perfor
 
 ## Project organization
 Project is divided into `libs`, modular source libraries for performing the relevant signal processing and deep learning tasks, and `projects`, pipelines for training and inference built on top of these libraries. 
+
 There are a few submodules BBHnet relies on:
 
-[`hermes`](./hermes)
-[`hermes`](https://github.com/ML4GW/hermes) submodule is included for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
+
+[`hermes`](https://github.com/ML4GW/hermes) submodule includes libraries for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
+
+
+[`ml4gw`](https://github.com/ML4GW/hermes) submodule includes torch utilities for common GW data manipulation, like projecting waveforms onto interfermeters
+
 
 
 ## Installation
