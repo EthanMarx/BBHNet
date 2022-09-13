@@ -13,6 +13,9 @@ BBHnet relies on the following [submodules](https://git-scm.com/book/en/v2/Git-T
 
 [`ml4gw`](https://github.com/ML4GW/hermes) submodule includes torch utilities for common GW data manipulation, like projecting waveforms onto interfermeters
 
+## Current Projects
+The [sandbox](https://github.com/ML4GW/BBHnet/projects/sandbox) pipeline contains several projects used for testing new ideas and configurations in a controlled setting.
+
 
 
 ## Installation
