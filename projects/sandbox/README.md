@@ -1,26 +1,37 @@
-# Sandbox Project
+# Sandbox Pipeline
 
 The sandbox project is an end to end pipeline for quickly experimenting with different ideas and configurations. The pipeline consists of
-multiple projects that are executed in serial via [Pinto's](https://github.com/ML4GW/pinto) Pipeline utility.
+multiple projects that are executed in serial via Pinto's [Pipeline utility](https://github.com/EthanMarx/pinto/blob/add-pipeline-to-readme/README.md#pipelines).
 
-## Running the Pipeline
-If you're in the `sandbox` directory, simply executing `pinto run` (equivalently, `pinto run ./`) will launch the pipeline . If you wish to run the pipeline from another location, execute `pinto run /path/to/sandbox/`. `Pinto` will look in the specified path for a `pyproject.toml`, and use the specified configuration settings to execute each project. See the individual project READMEs for more information on what they do.
+## Projects
+### [generate_waveforms](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_waveforms)
+Generates raw polarizations of BBH waveforms 
 
-## Configuration
-The pipeline configuration is contained in the `pyproject.toml` file. The `tool.typeo.base` table contains configuration applicable to multiple projects. Configuration dedicated to each individual project are contained in the `tool.typeo.project-executable`. To refer to a setting in the `tool.typeo.base`  table, simply add a line like: `config_variable` = "${base.config_variable}".
+### [generate_glitches](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_glitches)
+Uses [Omicron][link] to generate datasets of single interferometer glitches
 
-As a toy example,
+### [generate_background](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/generate_background)
+Generates coincident, continuous segments of background strain data
 
-```
-[tool.typeo.base]
-highpass = 32 # Hz
+### [train](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/train)
+Trains BBHnet with generated data
 
-[tool.typeo.generate_foreground]
-highpass = ${base.highpass}
+### [export](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/export)
+Exporting a trained BBHnet instance to a Triton model repository for as-a-service inference
 
-[tool.typeo.generate_background]
-highpass = ${base.highpass}
-```
+### [timeslide_injections](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/timeslide_injections)
+Generate a set of timeslides and injection streams.
+
+### [infer](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/infer)
+Use a Triton server instance hosting BBHnet to run inference on generated timeslides and injections.
+
+### [analyze](https://github.com/EthanMarx/BBHNet/edit/readme/projects/sandbox/analyze)
+Analyze network outputs from timeslides and injections to produce some figure of merit
+
+
+
+
+
 
 
 
