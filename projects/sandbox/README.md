@@ -4,7 +4,6 @@ The sandbox project is an end to end pipeline for quickly experimenting with dif
 multiple projects that are executed in serial via [Pinto's](https://github.com/ML4GW/pinto) Pipeline utility.
 
 ## Running Pipeline
-
 If you're in the `sandbox` directory, simply executing `pinto run` (equivalently, `pinto run ./`) will launch the pipeline . If you wish to run the pipeline from another location, execute `pinto run /path/to/sandbox/`. `Pinto` will look in the specified path for a `pyproject.toml`, and use the specified configuration settings to execute each project.
 
 ## Configuration
@@ -22,3 +21,12 @@ highpass = ${base.highpass}
 [tool.typeo.generate_background]
 highpass = ${base.highpass}
 ```
+
+## Pipeline Projects
+
+### generate_waveforms
+Generates sets of raw polarizations used for training
+
+### generate_glitches
+Uses Omicron excess power algorithm to create a dataset of glitches for each interferometer
+
