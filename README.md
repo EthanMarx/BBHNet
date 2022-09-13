@@ -71,3 +71,6 @@ pinto run path/to/project my-command --arg 1
 
 Otherwise, for Conda projects, you'll have to activate the appropriate Conda environment first then execute the code inside of it.
 For Poetry environments, it should be enough to run `poetry run my-command --arg 1` _from the projects directory_ (one downside of Poetry is that everything has to be done locally).
+
+### Running pipelines
+A Pipeline is composed of a series of projects. To execute a Pipeline, simply run `pinto run /path/to/pipeline/` (alternatively, `pinto run` if you are in the pipeline directory). `Pinto` will look in `/path/to/project/` for a `pyproject.toml` file. This file contains a `tool.pinto` table which describes the project execution order via the `steps` argument. A `step` if formatted in the following way: `project_directory:project-executable:optional_subcommand"`. `Pinto` will enter each project_directory, build and activate the projects environment, and run the project executable with the configuration settings specified in the `pyproject.toml`. 
