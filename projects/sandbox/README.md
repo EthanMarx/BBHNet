@@ -1,4 +1,4 @@
-# BBHnet Sandbox Project
+# Sandbox Project
 
 The sandbox project is an end to end pipeline for quickly experimenting with different ideas and configurations. The pipeline consists of
 multiple projects that are executed in serial via [Pinto's](https://github.com/ML4GW/pinto) Pipeline utility.
