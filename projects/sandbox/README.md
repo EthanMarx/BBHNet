@@ -3,7 +3,7 @@
 The sandbox project is an end to end pipeline for quickly experimenting with different ideas and configurations.
 
 ## Running Pipeline
-We utilize (Pinto's)[https://github.com/ML4GW/pinto] Pipeline ability to link project executables in serial. 
+We utilize [Pinto's](https://github.com/ML4GW/pinto) Pipeline ability to link project executables in serial. 
 If you're in the `sandbox` directory, simply executing `pinto run` (equivalently, `pinto run ./`) will launch the pipeline . If you wish to run the pipeline from another location, execute 
 `pinto run /path/to/sandbox/`. `Pinto` will look in the specified path for a `pyproject.toml`, and use the configuration settings to execute each project.
 
