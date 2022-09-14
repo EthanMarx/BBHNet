@@ -14,11 +14,10 @@ from tqdm import tqdm
 from bbhnet.logging import configure_logging
 from hermes.typeo import typeo
 
-"""
-Script that generates a dataset of glitches from omicron triggers.
-"""
 
-
+# TODO: retire?
+# struggling to recall the usecase for this function
+# in the context of this project
 def veto(times: list, segmentlist: SegmentList):
 
     """
@@ -27,11 +26,13 @@ def veto(times: list, segmentlist: SegmentList):
     segment in the list.
 
     Args:
-    - times: the times of event triggers to veto
-    - segmentlist: the list of veto segments to use
+        times:
+            The times of event triggers to veto
+        segmentlist:
+            The list of veto segments to use
 
     Returns:
-    - keep_bools: list of booleans; True for the triggers to keep
+        List of booleans; True the triggers to keep
     """
 
     # find args that sort times and create sorted times array
@@ -81,7 +82,7 @@ def generate_glitch_dataset(
     snr_thresh: float,
     start: float,
     stop: float,
-    window: float,
+    half_window: float,
     sample_rate: float,
     channel: str,
     frame_type: str,
@@ -90,20 +91,34 @@ def generate_glitch_dataset(
 ):
 
     """
-    Generates a list of omicron trigger times that satisfy snr threshold
+    Analyzes omicron triggers and queries strain data
+    for those that satisfy SNR threshold
 
     Arguments:
-    - ifo: ifo to generate glitch triggers for
-    - snr_thresh: snr threshold above which to keep as glitch
-    - start: start gpstime
-    - stop: stop gpstime
-    - window: half window around trigger time to query data for
-    - sample_rate: sampling arequency
-    - channel: channel name used to read data
-    - frame_type: frame type for data discovery w/ gwdatafind
-    - trig_file: txt file output from omicron triggers
-            (first column is gps times, 3rd column is snrs)
-    - vetoes: SegmentList object of times to ignore
+        ifo:
+            ifo to generate glitch triggers for
+        snr_thresh:
+            Lower SNR threshold
+        start:
+            Start gpstime
+        stop:
+            Stop gpstime
+        half_window:
+            Half window around trigger time to query data for
+        sample_rate:
+            Frequency which strain data is sampled
+        channel:
+            Strain data channel used to read data
+        frame_type:
+            Frame type for data discovery w/ gwdatafind
+        trig_file:
+            Text file of triggers produced by omicron
+            (first column contains gps times, 3rd column contains snrs)
+        vetoes: SegmentList object of times to ignore
+
+    Returns:
+        Array of glitch strain data
+        Array of glitch SNRS
     """
 
     glitches = []
@@ -127,8 +142,8 @@ def generate_glitch_dataset(
         snrs = snrs[keep_bools]
 
     # re-set 'start' and 'stop' so we aren't querying unnecessary data
-    start = np.min(triggers["time"]) - 2 * window
-    stop = np.max(triggers["time"]) + 2 * window
+    start = np.min(triggers["time"]) - 2 * half_window
+    stop = np.max(triggers["time"]) + 2 * half_window
 
     logging.info(
         f"Querying {stop - start} seconds of data for {len(triggers)} triggers"
@@ -159,7 +174,7 @@ def generate_glitch_dataset(
         time = trigger["time"]
 
         try:
-            glitch_ts = ts.crop(time - window, time + window)
+            glitch_ts = ts.crop(time - half_window, time + half_window)
 
             glitch_ts = glitch_ts.resample(sample_rate)
 
@@ -196,8 +211,14 @@ def omicron_main_wrapper(
     run_dir: Path,
 ):
 
-    """Parses args into a format compatible for Pyomicron,
-    then launches omicron dag
+    """Parses args into a format compatible for pyomicron,
+    and then runs pyomicron main which will create
+    and launch condor dags
+
+    Args: See main function
+
+    Returns:
+        Path to location of omicron runs
     """
 
     # pyomicron expects some arguments passed via
@@ -253,6 +274,8 @@ def omicron_main_wrapper(
     # create and launch omicron dag
     omicron_main(omicron_args)
 
+    return run_dir
+
 
 @typeo
 def main(
@@ -267,7 +290,7 @@ def main(
     segment_duration: int,
     overlap: int,
     mismatch_max: float,
-    window: float,
+    half_window: float,
     datadir: Path,
     logdir: Path,
     channel: str,
@@ -280,38 +303,64 @@ def main(
     verbose: bool = False,
 ):
 
-    """Generates a set of glitches for both
-        H1 and L1 that can be added to background
+    """Generates a strain dataset of single interferometer glitches
 
-        First, an omicron job is launched via pyomicron
-        (https://github.com/gwpy/pyomicron/). Next, triggers (i.e. glitches)
-        above a given SNR threshold are selected, and data is queried
-        for these triggers and saved in an h5 file.
+    Glitches are identified with the Omicron
+    (https://virgo.docs.ligo.org/virgoapp/Omicron/)
+    excess power algorithm. The Pyomicron
+    (https://github.com/gwpy/pyomicron/) wrapper is used
+    to simplify the generation of condor jobs
+    for performing the Omicron analysis.
+
+    Once Omicron triggers are identified, data is queried
+    for these triggers and saved in an h5 file.
+
+    For more detailed information on Omicron arguments,
+    see the pyomicron documentation.
 
     Arguments:
 
-    - snr_thresh: snr threshold above which to keep as glitch
-    - start: start gpstime
-    - stop: stop gpstime
-    - q_min: minimum q value of tiles for omicron
-    - q_max: maximum q value of tiles for omicron
-    - f_min: lowest frequency for omicron to consider
-    - cluster_dt: time window for omicron to cluster neighboring triggers
-    - chunk_duration: duration of data (seconds) for PSD estimation
-    - segment_duration: duration of data (seconds) for FFT
-    - overlap: overlap (seconds) between neighbouring segments and chunks
-    - mismatch_max: maximum distance between (Q, f) tiles
-    - window: half window around trigger time to query data for
-    - sample_rate: sampling frequency
-    - outdir: output directory to which signals will be written
-    - channel: channel name used to read data
-    - frame_type: frame type for data discovery w/ gwdatafind
-    - sample_rate: sampling frequency of timeseries data
-    - state_flag: identifier for which segments to use
-    - ifos: which ifos to generate glitches for
-    - veto_files:
-        dictionary where key is ifo and value is path
-        to file containing vetoes
+    snr_thresh:
+        Lower SNR threshold for declaring a glitch
+    start:
+        Start gpstime
+    stop:
+        Stop gpstime
+    q_min:
+        Minimum quality factor for omicron tiles
+    q_max:
+        Maximum quality factor for omicron tiles
+    f_min:
+        Lowest frequency for omicron tiles
+    cluster_dt:
+        Time window for omicron to cluster neighboring triggers
+    chunk_duration:
+        Duration of data (seconds) for PSD estimation
+    segment_duration:
+        Duration of data (seconds) for FFT
+    overlap:
+        Overlap (seconds) between neighbouring segments and chunks
+    mismatch_max:
+        Maximum distance between (Q, f) tiles
+    half_window:
+        Half window around trigger time to query data for
+    datadir:
+        Location where h5 data file is stored
+    logdir:
+        Location where log file is stored
+    channel:
+        Strain channel for reading data
+    frame_type:
+        Frame type for data discovery w/ gw_data_find
+    sample_rate:
+        Frequency which strain data is sampled
+    state_flag:
+        Data quality segment name
+    ifos:
+        Ifos for which to query data
+    veto_files:
+        Dictionary where key is ifo and value is path
+        to file containing vetoe segments
     """
 
     logdir.mkdir(exist_ok=True, parents=True)
@@ -385,7 +434,7 @@ def main(
             snr_thresh,
             start,
             stop,
-            window,
+            half_window,
             sample_rate,
             channel,
             frame_type,
