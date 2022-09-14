@@ -51,8 +51,12 @@ def main(
         logdir:
             Location where logfile is written
         force_generation:
+            If True, generate data even if path already exists
+        verbose:
+            Indicates whether to log at DEBUG or INFO level
 
-        outdir: where to store data
+    Returns:
+        Path to data file
     """
 
     # make logdir dir
