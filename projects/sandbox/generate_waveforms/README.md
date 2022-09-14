@@ -16,12 +16,11 @@ Running
 ```
 pinto run generate-waveforms -h
 ```
-
-Will list the available arguments 
+will list the available arguments.
 
 They can also by found in the pipelines `pyproject.toml` under the `[tool.typeo.scripts.generate_waveforms]` table.
 
-The project can be run with these arguments via 
+The project can be run with these default arguments via 
 
 ```console
 pinto run generate-waveforms --typeo ..:generate-waveforms
