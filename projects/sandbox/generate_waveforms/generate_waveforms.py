@@ -27,17 +27,30 @@ def main(
     verbose: bool = False,
 ):
 
-    """Simulates a set of raw BBH signals and saves them to an output file.
+    """Simulates a set of raw BBH signals
+    and saves them to an output file.
 
     Args:
-        prior_file: prior file for bilby to sample from
-        n_samples: number of signal to inject
-        outdir: output directory to which signals will be written
-        waveform_duration: length of injected waveforms
-        sample_rate: sample rate of the signal in Hz
-        force_generation: if True, generate signals even if path already exists
+        prior_file:
+            Prior file for bilby to sample from
+        n_samples:
+            Number of signal to inject
+        logdir:
+            Location where log file will be written
+        datadir:
+            Location where h5 data file will be written
+        waveform_duration:
+            Length of injected waveforms
+        sample_rate:
+            Sample rate of the signal in Hz
+        force_generation:
+            If True, generate signals even if path already exists
+        verbose:
+            Indicates whether to log at DEBUG or INFO level
+
     Returns:
-        path to output file
+        Path to output file
+
     """
 
     # make dirs

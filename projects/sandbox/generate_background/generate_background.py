@@ -30,9 +30,28 @@ def main(
     """Generates background data for training BBHnet
 
     Args:
-        start: start gpstime
-        stop: stop gpstime
-        ifos: which ifos to query data for
+        start:
+            Start gpstime
+        stop:
+            Stop gpstime
+        ifos:
+            Ifos for which to query data
+        sample_rate:
+            Frequency which strain data is sampled
+        channel:
+            Strain channel for reading data
+        frame_type:
+            Frame type for data discovery
+        state_flag:
+            Data quality segment name
+        minimum_length:
+            Shortest continuous, coincident segment to query
+        datadir:
+            Location where h5 data file is stored
+        logdir:
+            Location where logfile is written
+        force_generation:
+
         outdir: where to store data
     """
 
