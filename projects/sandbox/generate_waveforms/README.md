@@ -1,6 +1,6 @@
 # Generating Waveforms
 
-Generates raw time domain polarizations for a specified waveform approximant.
+Generates a set raw time domain polarizations for a specified waveform approximant.
 
 ## Installation
 If you are inside this directory, building this project can be done with 
