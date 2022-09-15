@@ -12,10 +12,10 @@ The repository is divided into `libs`, modular source libraries for performing t
 BBHnet relies on the following [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules):
 
 
-[`hermes`](https://github.com/ML4GW/hermes) includes libraries for exporting trained modesl as accelerated executables, and building a production-ready inference pipeline.
+[`hermes`](https://github.com/ML4GW/hermes) includes libraries for exporting trained models as accelerated executables, building production-ready inference pipelines, and utilizing cloud resources.
 
 
-[`ml4gw`](https://github.com/ML4GW/hermes) includes torch utilities for common GW data manipulation, like projecting waveforms onto interfermeters
+[`ml4gw`](https://github.com/ML4GW/hermes) includes torch utilities for common GW data manipulations, like projecting waveforms onto interfermeters
 
 
 ## Installation
