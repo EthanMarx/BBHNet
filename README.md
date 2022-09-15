@@ -46,7 +46,7 @@ create = false
 For these projects, you can build the necessary virtual environment by running 
 
 ```console
-conda create -n <environment name> --clone deepclean-base
+conda create -n <environment name> --clone bbhnet-base
 ```
 
 then using Poetry to install additional dependencies (called from the project's root directory, not the repository's)
