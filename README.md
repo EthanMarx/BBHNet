@@ -1,6 +1,10 @@
 # BBHnet
 Single source for training, performing inference with, then analyzing the performance of BBHnet, a neural network for performing detection of CBC sources in real gravitational-wave data.
 
+## Contributing
+
+See our [contributing guidelines](https://github.com/ML4GW/BBHNet/blob/main/CONTRIBUTING.md).
+
 
 ## Project organization
 The repository is divided into `libs`, modular source libraries for performing the relevant signal processing and deep learning tasks, and `projects`, pipelines for data generation, training, inference, and analysis built on top of these libraries. 
