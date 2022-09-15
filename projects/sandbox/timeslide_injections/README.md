@@ -11,18 +11,18 @@ pinto build
 ```
 
 ## Available Commands
-`timeslide-injections`
+`timeslide_injections`
 
 Running 
 ```
-pinto run timeslide-injections -h
+pinto run timeslide_injections -h
 ```
 will list the available arguments.
 
-They can also by found in the pipelines `pyproject.toml` under the `[tool.typeo.scripts.timeslide-injections]` table.
+They can also by found in the pipelines `pyproject.toml` under the `[tool.typeo.scripts.timeslide_injections]` table.
 
 The project can be run with these default arguments via 
 
 ```console
-pinto run timeslide-injections --typeo ..:timeslide-injections
+pinto run timeslide_injections --typeo ..:timeslide_injections
 ```
