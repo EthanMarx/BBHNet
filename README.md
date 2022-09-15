@@ -1,5 +1,5 @@
 # BBHnet
-Single source for training, performing inference with, then analyzing the performance of BBHnet, a neural network for performing detection of CBC sources in real gravitational-wave data.
+Single source for training, performing inference with, analyzing the performance of BBHnet, a neural network for performing detection of CBC sources in real gravitational-wave data.
 
 ## Contributing
 
