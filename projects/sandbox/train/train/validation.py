@@ -74,6 +74,7 @@ def make_validation_dataset(
     stop = start + kernel_size
     glitch_background[:num_h1, 0] = h1_glitches[:, start:stop]
     glitch_background[num_h1:-num_coinc, 1] = l1_glitches[:, start:stop]
+    print(coinc.shape, glitch_background.shape)
     glitch_background[-num_coinc:] = coinc[:, :, start:stop]
 
     # 3. create a tensor of background with waveforms injected
