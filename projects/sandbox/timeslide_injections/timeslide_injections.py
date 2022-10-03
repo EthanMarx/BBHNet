@@ -117,6 +117,7 @@ def main(
     fftlength: float = 2,
     state_flag: Optional[str] = None,
     verbose: bool = False,
+    force_generation: bool = False,
 ):
     """Generates timeslides of background and background + injections.
     Timeslides are generated on a per segment basis: First, science segments
@@ -149,6 +150,15 @@ def main(
     """
 
     logdir.mkdir(parents=True, exist_ok=True)
+
+    # if data directory exists, and force generation
+    # is not on, assume timeslide data exists.
+    if datadir.exists() and not force_generation:
+        logging.info(
+            "Timeslide data already exists"
+            " and forced generation is off. Not generating timeslides"
+        )
+
     datadir.mkdir(parents=True, exist_ok=True)
     configure_logging(logdir / "timeslide_injections.log", verbose)
 
