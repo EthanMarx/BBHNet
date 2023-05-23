@@ -62,7 +62,7 @@ def main(
     trigger_distance: float = 0,
     # validation args
     valid_frac: Optional[float] = None,
-    valid_stride: Optional[float] = None,
+    inference_sampling_rate: Optional[float] = None,
     monitor_metric: Literal["background", "glitch"] = "glitch",
     threshold: float = 1.0,
     early_stop: Optional[int] = None,
@@ -252,8 +252,6 @@ def main(
 
         # build a couple validation metrics to evaluate during training
         background_recall = BackgroundAUROC(
-            kernel_size=int(4 / valid_stride),
-            stride=int(4 / valid_stride),
             thresholds=[0.001, 0.01, 0.1],
         )
         glitch_recall = GlitchRecall(specs=[0.75, 0.9, 1])
@@ -291,7 +289,7 @@ def main(
             snr_thresh=snr_thresh,
             highpass=highpass,
             kernel_length=kernel_length,
-            stride=valid_stride,
+            inference_sampling_rate=inference_sampling_rate,
             sample_rate=sample_rate,
             batch_size=4 * batch_size,
             glitch_frac=glitch_prob,

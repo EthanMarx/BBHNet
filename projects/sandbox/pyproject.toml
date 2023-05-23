@@ -124,7 +124,7 @@ weight_decay = 2.81536e-06
 
 # validation parameters
 valid_frac = "${base.valid_frac}"
-valid_stride = 0.0625
+inference_sampling_rate = 16
 early_stop = 50
 monitor_metric = "background"
 threshold = 0.1

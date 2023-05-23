@@ -3,21 +3,13 @@ import pickle
 from dataclasses import dataclass
 from math import ceil
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 import torch
 from train.utils import split
 
+from ml4gw.dataloading import InMemoryDataset
 from ml4gw.gw import compute_network_snr, reweight_snrs
 from ml4gw.spectral import normalize_psd
 
@@ -112,19 +104,10 @@ class MultiThresholdAUROC(Metric):
 
 
 class BackgroundAUROC(MultiThresholdAUROC):
-    def __init__(
-        self, kernel_size: int, stride: int, thresholds: List[float]
-    ) -> None:
+    def __init__(self, thresholds: List[float]) -> None:
         super().__init__(thresholds)
-        self.kernel_size = kernel_size
-        self.stride = stride
 
     def call(self, background, _, signal):
-        background = background.unsqueeze(0)
-        background = torch.nn.functional.max_pool1d(
-            background, kernel_size=self.kernel_size, stride=self.stride
-        )
-        background = background[0]
         return super().call(signal, background)
 
 
@@ -395,6 +378,101 @@ def repeat(X: torch.Tensor, max_num: int) -> torch.Tensor:
     return X[:max_num]
 
 
+def inject_waveforms(
+    background: np.ndarray,
+    sample_rate: float,
+    waveforms: np.ndarray,
+    times: np.ndarray,
+) -> np.ndarray:
+
+    """
+    Inject a set of signals into background data
+
+    Args:
+        background:
+            A np.ndarray of background strain to inject into
+        waveforms:
+            An np.ndarary of shape (n_waveforms, waveform_size)
+            that contains the waveforms to inject
+        times: np.ndarray,:
+            An array of times where signals will be injected. It is assumed
+            t=0 corresponds to the first element of the background array
+    Returns
+        A dictionary where the key is an interferometer and the value
+        is a timeseries with the signals injected
+    """
+
+    data = background.copy()
+    sample_rate = 1 / (times[1] - times[0])
+    # create matrix of indices of waveform_size for each waveform
+    num_waveforms, waveform_size = waveforms.shape
+    idx = torch.arange(waveform_size)[None] - int(waveform_size // 2)
+    idx = torch.repeat_interleave(idx, len(waveforms), axis=0)
+
+    # offset the indices of each waveform corresponding to their time offset
+    time_diffs = times - times[0]
+    idx_diffs = (time_diffs * sample_rate).type(torch.int8)
+    idx += idx_diffs[:, None]
+
+    # flatten these indices and the signals out to 1D
+    # and then add them in-place all at once
+    idx = idx.reshape(-1)
+    waveforms = waveforms.reshape(-1)
+    data[idx] += waveforms
+
+    return data
+
+
+def integrate_and_cluster(
+    y: torch.Tensor,
+    integration_window: float,
+    cluster_window: float,
+    sample_rate: float,
+):
+    integration_window_size = int(integration_window * sample_rate)
+    cluster_window_size = int(cluster_window * sample_rate)
+    window = (
+        torch.ones(
+            (
+                1,
+                1,
+                integration_window_size,
+            ),
+            device=y.device,
+        )
+        / integration_window_size
+    )
+    y = y[None, :]
+    integrated = torch.nn.functional.conv1d(y, window,)[
+        0
+    ][: -integration_window_size + 1]
+    i = torch.argmax(integrated[:cluster_window_size])
+    events, times = [], []
+    while i < len(y):
+        val = y[i]
+        window = y[i + 1 : i + 1 + cluster_window_size]
+        if any(val <= window):
+            i += torch.argmax(window) + 1
+        else:
+            events.append(val)
+            t = i / sample_rate
+            times.append(t)
+            i += cluster_window_size + 1
+
+    events = torch.Tensor(events)
+    times = torch.Tensor(times)
+    return events, times
+
+
+def recover_injections(
+    events: torch.Tensor, times: torch.Tensor, injection_times: torch.Tensor
+):
+    diffs = torch.abs(injection_times[:, None] - times)
+    print(diffs.shape)
+    idx = torch.argmin(diffs, dim=-1)
+    return events[idx]
+
+
 class Validator:
     def __init__(
         self,
@@ -405,7 +483,7 @@ class Validator:
         snr_thresh: float,
         highpass: float,
         kernel_length: float,
-        stride: float,
+        inference_sampling_rate: float,
         sample_rate: float,
         batch_size: int,
         glitch_frac: float,
@@ -448,9 +526,8 @@ class Validator:
             kernel_length:
                 The length of windows to sample from the background
                 in seconds.
-            stride:
-                The number of seconds between sampled background
-                windows.
+            inference_sampling_rate:
+                The rate at which kernels will be sampled for evaluation.
             sample_rate:
                 The rate at which all relevant data arrays have
                 been sampled in Hz
@@ -466,7 +543,9 @@ class Validator:
                 Device on which to perform model evaluation.
         """
         self.device = device
-
+        self.batch_size = batch_size
+        self.background = background
+        self.spacing = 3
         # move all our validation metrics to the
         # appropriate device
         recorder.monitor.to(device)
@@ -475,9 +554,9 @@ class Validator:
                 metric.to(device)
         self.recorder = recorder
 
-        kernel_size = int(kernel_length * sample_rate)
-        stride_size = int(stride * sample_rate)
-
+        self.kernel_size = int(kernel_length * sample_rate)
+        self.stride_size = int(sample_rate / inference_sampling_rate)
+        self.sample_rate = sample_rate
         # sample waveforms and rescale snrs below threshold
         waveforms, _ = injector.sample(-1)
         df = 1 / (waveforms.shape[-1] / sample_rate)
@@ -496,48 +575,93 @@ class Validator:
         snrs[mask] = snr_thresh
         waveforms = reweight_snrs(waveforms, snrs, psds, sample_rate, highpass)
 
-        # create a dataset of pure background
-        background = make_background(background, kernel_size, stride_size)
-        self.background_loader = self.make_loader(background, batch_size)
-
-        # now repliate that dataset but with glitches inserted
-        # into either or both interferometer channels
-        glitch_background = make_glitches(glitches, background, glitch_frac)
-        self.glitch_loader = self.make_loader(glitch_background, batch_size)
-
-        # create a tensor of background with waveforms injected.
-        signal_background = repeat(background, len(waveforms))
-
-        start = waveforms.shape[-1] // 2 - kernel_size // 2
-        stop = start + kernel_size
-        signal_background += waveforms[:, :, start:stop]
-        self.signal_loader = self.make_loader(signal_background, batch_size)
-
-    def make_loader(self, X: torch.Tensor, batch_size: int):
-        dataset = torch.utils.data.TensorDataset(X)
-        return torch.utils.data.DataLoader(
-            dataset,
-            pin_memory=True,
-            batch_size=batch_size,
-            pin_memory_device=self.device,
-        )
-
-    def get_predictions(
-        self, loader: Iterable[Tuple[torch.Tensor]], model: torch.nn.Module
-    ) -> torch.Tensor:
-        preds = []
-        for (X,) in loader:
-            X = X.to(self.device)
-            y_hat = model(X)[:, 0]
-            preds.append(y_hat)
-        return torch.cat(preds)
+        # cut ends of waveform so we can pack more
+        # into a given length of background;
+        # note that as we generalize to l
+        # longer signals we'll need to rethink this.
+        start = waveforms.shape[-1] // 2 - int(kernel_length * sample_rate)
+        stop = start + int(1.5 * kernel_length * sample_rate)
+        self.waveforms = waveforms[:, :, start:stop].numpy()
 
     @torch.no_grad()
     def __call__(self, model: torch.nn.Module, train_loss: float) -> bool:
-        background_preds = self.get_predictions(self.background_loader, model)
-        glitch_preds = self.get_predictions(self.glitch_loader, model)
-        signal_preds = self.get_predictions(self.signal_loader, model)
+        idx, shift, Tb = 0, 1, 0
+        background_events, foreground_events = [], []
+        while idx < len(self.waveforms):
+            start = int(shift * self.sample_rate)
+            X = np.stack(
+                [self.background[0, :-start], self.background[1, start:]]
+            )
 
-        return self.recorder(
-            model, train_loss, background_preds, glitch_preds, signal_preds
+            injection_times = torch.arange(
+                0, X.shape[-1] / self.sample_rate, self.spacing
+            )
+
+            num_waveforms = len(injection_times)
+            waveforms = self.waveforms[idx : idx + num_waveforms]
+
+            X_inj = []
+            for i, background in enumerate(X):
+                inj = inject_waveforms(
+                    background,
+                    self.sample_rate,
+                    waveforms[:, i],
+                    injection_times,
+                )
+                X_inj.append(inj)
+            X_inj = np.stack(X_inj)
+
+            X = InMemoryDataset(
+                X,
+                kernel_size=self.kernel_size,
+                batch_size=self.batch_size,
+                coincident=True,
+                shuffle=False,
+                stride=self.stride_size,
+                device=self.device,
+            )
+            X_inj = InMemoryDataset(
+                X_inj,
+                kernel_size=self.kernel_size,
+                batch_size=self.batch_size,
+                coincident=True,
+                shuffle=False,
+                stride=self.stride_size,
+                device=self.device,
+            )
+            y, y_inj = [], []
+            for x, x_inj in zip(X, X_inj):
+                x.to(self.device)
+                x_inj.to(self.device)
+
+                y.append(model(x)[:, 0])
+                y_inj.append(model(x_inj)[:, 0])
+            y = torch.cat(y)
+            y_inj = torch.cat(y_inj)
+
+            y, _ = integrate_and_cluster(
+                y,
+                integration_window=1,
+                cluster_window=3,
+                sample_rate=self.sample_rate,
+            )
+            y_inj, times = integrate_and_cluster(
+                y_inj,
+                integration_window=1,
+                cluster_window=3,
+                sample_rate=self.sample_rate,
+            )
+
+            print(times.shape, injection_times.shape, y_inj.shape)
+            y_inj = recover_injections(y_inj, times, injection_times)
+
+            background_events.append(y)
+            foreground_events.append(y_inj)
+
+            Tb += X.shape[-1] / self.sample_rate
+            shift += 1
+            idx += num_waveforms
+
+        self.recorder(
+            model, train_loss, background_events, _, foreground_events
         )
