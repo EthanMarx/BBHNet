@@ -6,7 +6,7 @@ import bilby
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import Div, MultiChoice, TabPanel, Tabs
-from vizapp.pages import AnalysisPage, PerformanceSummaryPage
+from vizapp.pages import AnalysisPage, DataSummaryPage, PerformanceSummaryPage
 
 from aframe.analysis.ledger.events import EventSet, RecoveredInjectionSet
 from aframe.analysis.ledger.injections import InjectionParameterSet
@@ -91,7 +91,7 @@ class VizApp:
 
         # initialize all our pages and their constituent plots
         self.pages, tabs = [], []
-        for page in [PerformanceSummaryPage, AnalysisPage]:
+        for page in [DataSummaryPage, PerformanceSummaryPage, AnalysisPage]:
             page = page(self)
             self.pages.append(page)
 

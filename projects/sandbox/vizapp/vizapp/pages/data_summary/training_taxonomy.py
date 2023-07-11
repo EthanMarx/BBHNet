@@ -192,6 +192,18 @@ class TrainingTaxonomy:
             x_range=(-0.5, 1.0),
         )
 
+        self.p.wedge(
+            x=0,
+            y=1,
+            radius=0.4,
+            start_angle="start_angle",
+            end_angle="end_angle",
+            line_color="white",
+            fill_color="color",
+            legend_group="category",
+            source=self.source,
+        )
+
         self.waveform_slider = Slider(
             title="Waveform Prob",
             start=0,
@@ -223,6 +235,8 @@ class TrainingTaxonomy:
         self.p.axis.axis_label = None
         self.p.axis.visible = False
         self.p.grid.grid_line_color = None
+
+        self.create_callback()
 
         return column(
             row(self.waveform_slider, self.glitch_slider, self.mute_slider),
@@ -318,16 +332,3 @@ class TrainingTaxonomy:
 
         self.mute_slider.js_on_change("value", callback)
         callback.args["mu_slider"] = self.mute_slider
-
-    def plot_data(self):
-        self.p.wedge(
-            x=0,
-            y=1,
-            radius=0.4,
-            start_angle="start_angle",
-            end_angle="end_angle",
-            line_color="white",
-            fill_color="color",
-            legend_group="category",
-            source=self.source,
-        )
