@@ -6,9 +6,10 @@ import bilby
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import Div, MultiChoice, TabPanel, Tabs
-from vizapp.pages import AnalysisPage, PerformanceSummaryPage
+from vizapp.pages import AnalysisPage, DataSummaryPage, PerformanceSummaryPage
 
 from aframe.analysis.ledger.events import EventSet, RecoveredInjectionSet
+from aframe.analysis.ledger.injections import InjectionParameterSet
 
 if TYPE_CHECKING:
     import torch
@@ -22,6 +23,11 @@ class VizApp:
         model: "torch.nn.Module",
         preprocessor: "torch.nn.Module",
         snapshotter: "torch.nn.Module",
+        waveform_prob: float,
+        glitch_prob: float,
+        downweight: float,
+        swap_frac: float,
+        mute_frac: float,
         base_directory: Path,
         data_directory: Path,
         cosmology: "Cosmology",
@@ -44,6 +50,11 @@ class VizApp:
         self.model = model
         self.preprocessor = preprocessor
         self.snapshotter = snapshotter
+        self.waveform_prob = waveform_prob
+        self.glitch_prob = glitch_prob
+        self.downweight = downweight
+        self.swap_frac = swap_frac
+        self.mute_frac = mute_frac
         self.veto_parser = veto_parser
         self.ifos = ifos
         self.source_prior = source_prior
@@ -63,14 +74,14 @@ class VizApp:
 
         # load results and data from the run we're visualizing
         self.response_path = data_directory / "test" / "waveforms.h5"
-        # rejected = data_directory / "test" / "rejected-parameters.h5"
+        rejected = data_directory / "test" / "rejected-parameters.h5"
 
         infer_dir = base_directory / "infer"
         self.background = EventSet.read(infer_dir / "background.h5")
         self.foreground = RecoveredInjectionSet.read(
             infer_dir / "foreground.h5"
         )
-        # self.rejected_params = InjectionParameterSet.read(rejected)
+        self.rejected_params = InjectionParameterSet.read(rejected)
 
         # set up our veto selecter and set up the initially
         # blank veto mask, use this to update the sources
@@ -80,7 +91,7 @@ class VizApp:
 
         # initialize all our pages and their constituent plots
         self.pages, tabs = [], []
-        for page in [PerformanceSummaryPage, AnalysisPage]:
+        for page in [DataSummaryPage, PerformanceSummaryPage, AnalysisPage]:
             page = page(self)
             self.pages.append(page)
 

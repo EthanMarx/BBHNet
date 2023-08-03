@@ -25,6 +25,11 @@ def _normalize_path(path: Path):
 @architecturize
 def main(
     architecture: Callable,
+    waveform_prob: float,
+    glitch_prob: float,
+    downweight: float,
+    swap_frac: float,
+    mute_frac: float,
     basedir: Path,
     datadir: Path,
     veto_definer_file: Path,
@@ -104,6 +109,11 @@ def main(
         model=model,
         preprocessor=preprocessor,
         snapshotter=snapshotter,
+        waveform_prob=waveform_prob,
+        glitch_prob=glitch_prob,
+        downweight=downweight,
+        swap_frac=swap_frac,
+        mute_frac=mute_frac,
         base_directory=basedir,
         data_directory=datadir,
         cosmology=cosmology,

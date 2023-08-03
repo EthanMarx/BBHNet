@@ -50,6 +50,11 @@ training_prior = "aframe.priors.priors.mdc_prior_chirp_distance"
 testing_prior = "aframe.priors.priors.mdc_prior_chirp_distance"
 fduration = 1
 valid_frac = 0.25
+waveform_prob = 0.5
+glitch_prob = 0.4
+downweight = 0.9
+swap_frac = 0.025
+mute_frac = 0.12
 cosmology = "aframe.priors.cosmologies.planck"
 streams_per_gpu = 3
 waveform_approximant = "IMRPhenomPv2"
@@ -139,9 +144,9 @@ psd_length = "${base.training_psd_length}"
 
 # augmentation args
 trigger_distance = -0.75
-waveform_prob = 0.5
-swap_frac = 0.025
-mute_frac = 0.12
+waveform_prob = "${base.waveform_prob}"
+swap_frac = "${base.swap_frac}"
+mute_frac = "${base.mute_frac}"
 
 # validation args
 valid_frac = "${base.valid_frac}"
@@ -316,6 +321,11 @@ start = "${base.train_stop}"
 stop = "${base.test_stop}"
 background_length = 64
 kernel_length = 1
+waveform_prob = "${base.waveform_prob}"
+glitch_prob = "${base.glitch_prob}"
+downweight = "${base.downweight}"
+swap_frac = "${base.swap_frac}"
+mute_frac = "${base.mute_frac}"
 sample_rate = "${base.sample_rate}"
 fduration = "${base.fduration}"
 veto_definer_file = "./vetoes/H1L1-HOFT_C01_O3_CBC.xml"
