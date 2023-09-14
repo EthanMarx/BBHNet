@@ -136,7 +136,6 @@ class GenerateBackground(luigi.Task):
 
     def write_parameters(self, parameters: np.ndarray):
         with open(os.path.join(self.submit_dir, "parameters.txt"), "w") as f:
-            f.write("start,stop,writepath\n")
             for start, stop, writepath in parameters:
                 f.write(f"{start},{stop},{writepath}\n")
 
@@ -149,7 +148,6 @@ class GenerateBackground(luigi.Task):
             duration = stop - start
             fname = make_fname("background", start, duration)
             write_path = os.path.join(self.root, "background", fname)
-
             if not os.path.exists(write_path):
                 generate.append(
                     [
@@ -164,6 +162,9 @@ class GenerateBackground(luigi.Task):
     def run(self):
         # validate segments
         parameters = self.validate_segments()
+
         # write parameters.txt
         self.write_parameters(parameters)
+
+        # deploy condor jobs
         yield self.clone(SubmitGenerateBackground)

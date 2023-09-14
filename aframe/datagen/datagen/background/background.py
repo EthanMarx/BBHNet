@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import List
 
+from gwpy.timeseries import TimeSeries, TimeSeriesDict
 from typeo import scriptify
-
-from mldatafind.authenticate import authenticate
-from mldatafind.io import fetch_timeseries
 
 
 @scriptify
@@ -37,15 +35,13 @@ def main(
     Returns: The `Path` of the output file
     """
 
-    authenticate()
-    channels = [f"{ifo}:{channel}" for ifo in ifos]
-    data = fetch_timeseries(
-        channels, start, stop, allow_tape=True, verbose=True
-    )
-    data = data.resample(sample_rate)
-    for ifo in ifos:
-        data[ifo] = data.pop(f"{ifo}:{channel}")
+    # authenticate()
 
+    data = TimeSeriesDict()
+    for ifo in ifos:
+        data[ifo] = TimeSeries.get(f"{ifo}:{channel}", start, stop)
+
+    data = data.resample(sample_rate)
     data.write(write_path)
     return write_path
 

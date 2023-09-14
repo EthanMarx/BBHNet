@@ -137,12 +137,13 @@ class CondorApptainerTask(AframeApptainerTask):
     @property
     def binds(self):
         # bind for ease of data discovery
-        return {"/cvmfs": "/cvmfs"}
+        return {"/cvmfs": "/cvmfs", "/ceph": "/ceph", "/archive": "/archive"}
 
     @property
     def environment(self) -> dict:
         return {
             "GWDATAFIND_SERVER": os.getenv("GWDATAFIND_SERVER", ""),
+            "LIGO_USERNAME": os.getenv("LIGO_USERNAME"),
             "BEARER_TOKEN_FILE": "$$(CondorScratchDir)/.condor_creds/igwn.use",
         }
 
@@ -176,7 +177,7 @@ class CondorApptainerTask(AframeApptainerTask):
 
         job_kwargs = {
             "name": self.name,
-            "submit_name": self.name,
+            # "submit_name": self.name,
             "error": self.submit_dir,
             "output": self.submit_dir,
             "log": self.submit_dir,
