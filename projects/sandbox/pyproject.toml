@@ -1,11 +1,11 @@
 [tool.pinto]
 steps = [
-    "datagen:deploy-background",
-    "datagen:generate-waveforms",
-    "datagen:deploy-timeslide-waveforms",
-    "train:train:resnet",
-    "export:export-model:resnet",
-    "infer:deploy-infer",
+    #"datagen:deploy-background",
+    #"datagen:generate-waveforms",
+    #"datagen:deploy-timeslide-waveforms",
+    #"train:train:resnet",
+    #"export:export-model:resnet",
+    #"infer:deploy-infer",
     "plots:sensitive-volume"
 ]
 
@@ -19,7 +19,7 @@ sample_rate = 2048
 kernel_length = 1.5
 ifos = ['H1', 'L1']
 hopeless_snr_thresh = 4
-global_seed = 42
+global_seed = 84
 
 train_start = 1240579783
 train_stop = 1241443783  # 10 day train window
@@ -254,10 +254,10 @@ psd_length = "${base.inference_psd_length}"
 verbose = "${base.verbose}"
 
 [tool.typeo.scripts.sensitive-volume]
-background_file = "${base.basedir}/infer/background.h5"
-foreground_file = "${base.basedir}/infer/foreground.h5"
-rejected_params = "${base.datadir}/test/rejected-parameters.h5"
-output_fname = "${base.basedir}/infer/sensitive-volume.html"
+background_file = ["${base.basedir}/infer/background.h5", "/home/ethan.marx/aframe/methods-paper-main-run/infer/background.h5"]
+foreground_file = ["${base.basedir}/infer/foreground.h5", "/home/ethan.marx/aframe/methods-paper-main-run/infer/foreground.h5"]
+rejected_params = ["${base.datadir}/test/rejected-parameters.h5", "/home/ethan.marx/aframe/methods-paper-data/test/rejected-parameters.h5"]
+output_fname = "./sensitive-volume-combined.html"
 log_file = "${base.basedir}/log/sensitive_volume.log"
 max_far = 1000
 sigma = 0.1
