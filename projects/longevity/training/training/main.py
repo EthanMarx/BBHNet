@@ -1,7 +1,7 @@
 import logging
 import shutil
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import List
 
@@ -16,7 +16,9 @@ train_config_path = source_dir.parent / "pyproject.toml"
 
 def read_config(path):
     with open(path, "r") as f:
-        return toml.load(f)
+        config = toml.load(f)
+
+    return config
 
 
 @scriptify
@@ -26,7 +28,7 @@ def launch_train(
 ):
 
     # construct directories / dataset paths for this interval
-    retrain_dir = interval / "retrained"
+    retrain_dir = interval / "retrained-scratch"
     retrain_dir.mkdir(exist_ok=True, parents=True)
 
     datadir = interval / "data"
@@ -79,7 +81,7 @@ def main(basedir: Path, gpus: List[int]):
     # for each interval, train a model
     intervals = [x for x in basedir.iterdir() if x.is_dir()]
     futures = []
-    with ThreadPoolExecutor(len(gpus)) as ex:
+    with ProcessPoolExecutor(len(gpus)) as ex:
         for gpu, interval in zip(gpus, intervals):
             logging.info(f"Training for interval {interval} on GPU {gpu}")
             future = ex.submit(launch_train, interval, gpu)

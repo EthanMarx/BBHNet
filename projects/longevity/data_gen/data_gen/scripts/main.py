@@ -35,11 +35,11 @@ def deploy_background_wrapper(
     ifos: List[str],
     sample_rate: float,
     channel: str,
-    state_flag: str,
     datadir: Path,
     logdir: Path,
     accounting_group: str,
     accounting_group_user: str,
+    state_flag: str,
     max_segment_length: float = 20000,
     request_memory: int = 32768,
     request_disk: int = 1024,
@@ -55,18 +55,18 @@ def deploy_background_wrapper(
         ifos,
         sample_rate,
         channel,
-        state_flag,
         datadir,
         logdir,
         accounting_group,
         accounting_group_user,
+        state_flag,
         max_segment_length,
         request_memory,
         request_disk,
         force_generation,
         verbose,
     )
-    return train_stop, test_stop, datadir
+    return train_stop, test_stop, Path(datadir)
 
 
 @scriptify
@@ -132,11 +132,11 @@ def main(
                 ifos,
                 sample_rate,
                 channel,
-                state_flag,
                 datadir,
                 datadir / "log",
                 accounting_group,
                 accounting_group_user,
+                state_flag,
                 max_segment_length,
                 request_memory,
                 request_disk,
@@ -149,6 +149,7 @@ def main(
         futures = []
         for future in as_completed(background_futures):
             start, stop, datadir = future.result()
+
             logging.info(f"Deploying timeslides waveform generation for {out}")
             args = [
                 start,

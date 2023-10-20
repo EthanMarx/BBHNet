@@ -1,9 +1,9 @@
 [tool.pinto]
 steps = [
     #"data_gen:launch-datagen",
-    #"training:launch-training",
+    "training:launch-training",
     #"exporting:launch-export:resnet",
-    "inference:launch-inference",
+    #"inference:launch-inference",
 ]
 
 
@@ -59,15 +59,15 @@ verbose = true
 
 [tool.typeo.scripts.launch-training]
 basedir = "${base.basedir}"
-gpus = [1, 2, 3, 4, 5, 6, 7, 8]
+gpus = [1, 2, 3, 4, 5, 6]
 
 [tool.typeo.scripts.train]
 
 # optimization args
 batch_size = 384
-max_epochs = 2
-max_lr = 0.000585
-lr_ramp_epochs = 1
+max_epochs = 200
+max_lr = 0.000585 # factor of 10 lower for fine tuning
+lr_ramp_epochs = 23
 weight_decay = 0.0
 
 
@@ -98,16 +98,16 @@ valid_frac = 0.25
 valid_stride = 0.5
 max_fpr = 1e-3
 valid_livetime = 57600  # 16 hours of background
-early_stop = 200
+early_stop = 35
 checkpoint_every = 3
+#init_weights = "/home/ethan.marx/aframe/methods-paper-main-run/training/weights.pt"
 
 # misc args
 device = "cuda"
 verbose = true
 use_amp = true
-
+seed = 42
 commands.resnet = "${base.resnet}"
-
 
 [tool.typeo.scripts.launch-export]
 basedir = "${base.basedir}"
@@ -135,7 +135,7 @@ commands.resnet = "${base.resnet}"
 
 [tool.typeo.scripts.launch-inference]
 basedir = "${base.basedir}"
-original_model_repo_dir = "/home/ethan.marx/aframe/paper/best_o3_model/iteration_1/model_repo/"
+original_model_repo_dir = "${ORIGINAL_MODEL_DIR}" 
 image = "hermes/tritonserver:22.12"
 model_name = "aframe-stream"
 

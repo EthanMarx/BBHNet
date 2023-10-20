@@ -285,6 +285,10 @@ def main(
     # build some objects for augmenting waveform snrs
     waveform_duration = waveforms.shape[-1] / sample_rate
     rescaler = SnrRescaler(sample_rate, waveform_duration, highpass).to(device)
+
+    # set max and min min snr to thresh to turn off scheduling
+    # during fine tuning
+    # logging.info("Turning off snr scheduling")
     snr_sampler = SnrSampler(
         max_min_snr=max_min_snr,
         min_min_snr=snr_thresh,

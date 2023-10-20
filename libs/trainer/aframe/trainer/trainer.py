@@ -215,6 +215,12 @@ def train(
     elif use_amp:
         logging.warning("'use_amp' flag set but no cuda device, ignoring")
 
+    # run validation before training to get a sense
+    # of initialized models performance on validation set
+    logging.info("Evaluating initialized model on validation set")
+    model.eval()
+    validator(model, 0.0)
+
     logging.info("Beginning training loop")
     for epoch in range(max_epochs):
         if epoch == 0 and profile:
