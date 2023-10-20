@@ -17,7 +17,6 @@ train_config_path = source_dir.parent / "pyproject.toml"
 def read_config(path):
     with open(path, "r") as f:
         config = toml.load(f)
-
     return config
 
 
