@@ -46,7 +46,7 @@ def main(
 
         # launch inference job for each interval
         # analyzing data with the retrained models
-        retrained = interval / "retrained"
+        retrained = interval / "retrained-scratch"
         infer_dir = retrained / "infer"
         infer_dir.mkdir(exist_ok=True, parents=True)
         complete = all(

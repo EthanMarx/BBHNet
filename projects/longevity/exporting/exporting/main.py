@@ -37,9 +37,13 @@ def main(
     with ThreadPoolExecutor(1) as executor:
         for interval in intervals:
             logging.info(f"Exporting for interval {interval}")
-            repository_directory = interval / "retrained" / "model_repo"
-            logdir = interval / "retrained" / "log"
-            weights = interval / "retrained" / "training" / "weights.pt"
+            repository_directory = (
+                interval / "retrained-scratch" / "model_repo"
+            )
+            logdir = interval / "retrained-scratch" / "log"
+            weights = (
+                interval / "retrained-scratch" / "training" / "weights.pt"
+            )
             args = [
                 architecture,
                 repository_directory,
